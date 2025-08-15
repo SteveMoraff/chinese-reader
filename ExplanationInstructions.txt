@@ -1,0 +1,14 @@
+I am creating a database of explanations of small groupings of Chinese words. These phrases often use individual Chinese words that can have a lot of meanings. The purpose is to allow the reader to understand the meanings of these words in their context.
+
+Please have a look at the format of this json file. The rules for these explanations are:
+
+1) Provide pinyin for any Chinese characters you use in the explanation.
+2) Use <br> for newlines so that the newlines will appear in the div when I set the div innerHTML.
+3) Explain the meanings of individual characters and/or words used in the phrases, each on their own line.
+4) Phrases need to be contain two or more Chinese words. 3+ characters is also preferable. Phrases must be less than 10 characters.
+5) The phrase key for the map must exactly match a block of text in the provided paragraph.
+6) The output has to be formatted properly for inclusion in the attached json file.
+
+Please look at the following paragraph and pick about 6-10 interesting or challenging phrases in it, and provide detailed explanations that use this format so that I can add them to the list.
+
+某天清晨，公园上空的雾气尚未散去，游客们才刚刚入园。名叫莫要的男孩站在起源石前拍照，他希望同学们在社交媒体上看到他的酷照后觉得他很帅。
