@@ -1,17 +1,17 @@
-# Chinese Reader
+# 🌏 Chinese Reader 📖
 
-A lightweight, browser-based tool for reading and studying Chinese text. It shows **pinyin and meanings on click or touch** (not inline), plus character-level breakdowns.
+A lightweight, browser-based tool for reading and studying Chinese text. It shows **pinyin and meanings on click or touch** (not inline), plus character-level breakdowns — perfect for curious learners! ✨
 
 ---
 
-## Features
+## 🌟 Features
 
-* Click or tap a word/character to reveal **pinyin**, **gloss**, and **character breakdown**
-* Works fully client‑side (no server)
-* Minimal UI focused on reading flow
-* Mobile and desktop friendly
+* 🖱️ Click or 📱 tap a word/character to reveal **pinyin**, **gloss**, and **character breakdown**
+* ⚡ Works fully client‑side (no server)
+* 🎯 Minimal UI focused on reading flow
+* 💻📱 Mobile and desktop friendly
 
-## Quick Start
+## 🚀 Quick Start
 
 1. **Download or clone** this repo.
 2. Open `index.html` in a modern browser **or** serve locally:
@@ -25,23 +25,23 @@ A lightweight, browser-based tool for reading and studying Chinese text. It show
 
 > **Project preference:** single-file JS. The app is designed so `index.html` bootstraps and all logic lives in `script.js` (no separate CSS/HTML required beyond the bare shell).
 
-## How It Works (high level)
+## 🔍 How It Works
 
 * The reader tokenizes text into words/characters.
 * On **click/touch**, it looks up the selection, then displays:
 
-  * **Pinyin** for the selected token
-  * **Definition** (dictionary-backed)
-  * **Character breakdown**: component characters with brief meanings
-* Optional **text-to-speech** hook can read the selected token aloud.
+  * 🈶 **Pinyin** for the selected token
+  * 📜 **Definition** (dictionary-backed)
+  * 🔡 **Character breakdown**: component characters with brief meanings
+* 🔊 Optional text-to-speech hook can read the selected token aloud.
 
-## Keyboard & Touch
+## ⌨️ Keyboard & Touch
 
 * **Click / Tap**: show pinyin + definition overlay for the token
 * **Esc / Tap outside**: dismiss overlay
 * **Arrow keys** (optional): move selection to previous/next token
 
-## File Layout
+## 📂 File Layout
 
 ```
 / (repo root)
@@ -52,27 +52,27 @@ A lightweight, browser-based tool for reading and studying Chinese text. It show
 └─ README.md         # this file
 ```
 
-## Configuration
+## ⚙️ Configuration
 
 * **Dictionaries**: point `script.js` to your preferred dictionary JSON (e.g., CC-CEDICT format) under `data/`.
 * **Display mode**: choose per‑click overlays (default) vs. side panel details.
 * **Fonts**: the app chooses a legible CJK font stack; override in `script.js` if desired.
 
-## Roadmap
+## 🛣 Roadmap
 
-* Sentence‑by‑sentence playback
-* Per‑character stroke order hints
-* Export annotated text (with footnoted pinyin) to Markdown/PDF
-* Frequency-based highlighting
+* 🔁 Sentence‑by‑sentence playback
+* ✏️ Per‑character stroke order hints
+* 📄 Export annotated text (with footnoted pinyin) to Markdown/PDF
+* 🎨 Frequency-based highlighting
 
-## Contributing
+## 🤝 Contributing
 
 Pull requests are welcome. For larger changes, please open an issue first to discuss direction.
 
 1. Fork → create a feature branch → commit → PR
 2. Prefer small, focused changes with clear commit messages
 
-## License
+## 📜 License
 
 [MIT](LICENSE) — © Steve Moraff. Do anything you want, just keep the license and attribution.
-# chinese-reader
+
