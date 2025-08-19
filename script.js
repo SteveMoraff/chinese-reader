@@ -1,4 +1,7 @@
 // Import the function from program.js
+import { makeChild, makeChildInput, makeDiv, addBorder, applyStyles } from './dom.js';
+import { loadImage, prepareYouTubeContainer, embedYouTubeAtBottom, getUrlFromPath } from './media.js';
+import { WordBox } from './WordBox.js';
 import { chineseWords, chinesePhrases, entry, wordToPinyin, wordToEnglish, searchChineseWords, searchExactChineseWords, speakChinese, prepareChunks, speakChunks, styleButton, fitTextInElement, stopSpeaking } from './program.js';
 import textFit from './textFit.js';
 
@@ -318,42 +321,12 @@ function program() {
         browseDiv = makeDiv(null, body, 'browserDiv', 50, 50, 49, 49, true);
     }
 
-    function loadImage(basePath, element) {
-        const extensions = ['.jpg', '.webp'];
-        let attempt = 0;
-
-        function tryLoad() {
-            if (attempt >= extensions.length) {
-                console.error(`Failed to load image: ${basePath} (tried ${extensions.join(', ')})`);
-                return;
-            }
-
-            const img = new Image();
-            img.src = basePath + extensions[attempt];
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'fill';
-            img.style.display = 'block';
-
-            img.onload = () => {
-                element.innerHTML = '';
-                element.appendChild(img);
-            };
-
-            img.onerror = () => {
-                attempt++;
-                tryLoad(); // Try the next extension
-            };
-        }
-
-        tryLoad();
-    }
-
 
     styleButton(buttonSpeakPhrase);
     loadImage('stories/speaker', buttonSpeakPhrase);
     buttonSpeakPhrase.addEventListener('click', function () {
-        speakChinese(translationDiv.getAttribute('data-chinese-phrase', chineseSpeechSpeed, chinesePitch));
+        const phrase = translationDiv.getAttribute('data-chinese-phrase');
+        if (phrase) speakChinese(phrase, chineseSpeechSpeed, chinesePitch);
     });
     translationDivText.addEventListener('click', function () {
         setDiv2(pictureDiv);
@@ -487,149 +460,14 @@ function program() {
         }
     }
 
-    /**
-     * Prepares a container div for a YouTube embed without repositioning it.
-     * If the div has no defined height, it uses a responsive 16:9 ratio.
-     *
-     * @param {HTMLElement} div - The container div.
-     */
-    function prepareYouTubeContainer(div) {
-        const computedStyle = window.getComputedStyle(div);
-        const currentHeight = parseFloat(computedStyle.height);
-
-        // Ensure the container is positioned relative so that an absolute child
-        // (the iframe) is positioned relative to it.
-        if (computedStyle.position === 'static') {
-            div.style.position = 'relative';
-        }
-
-        // Hide any overflow
-        div.style.overflow = 'hidden';
-
-        // If the container doesn't have an explicit height, set it up for a 16:9 ratio.
-        if (!currentHeight || currentHeight === 0) {
-            // This sets the element's height to 0 but with bottom padding that makes it 16:9.
-            div.style.height = '0';
-            div.style.paddingBottom = '56.25%'; // 9/16 expressed as a percentage.
-        }
-    }
-
-    /**
-     * Embeds a YouTube video into a container div,
-     * anchoring the video to the bottom of the container.
-     *
-     * @param {HTMLElement} div - The container div.
-     * @param {string|URL} youtubeUrl - The YouTube URL or a URL-like object.
-     */
-    function embedYouTubeAtBottom(div, youtubeUrl) {
-        // Ensure youtubeUrl is a string (in case a URL object is passed)
-        if (typeof youtubeUrl !== 'string') {
-            if (youtubeUrl && typeof youtubeUrl.href === 'string') {
-                youtubeUrl = youtubeUrl.href;
-            } else {
-                console.error('youtubeUrl must be a string or an object with a href property');
-                return;
-            }
-        }
-
-        // Extract the video ID from common YouTube URL formats
-        const regex = /(?:youtube\.com\/(?:.*v=|.*\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-        const match = youtubeUrl.match(regex);
-        if (!match) {
-            console.error('Invalid YouTube URL');
-            return;
-        }
-        const videoId = match[1];
-        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-
-        // Ensure the container div is positioned relative
-        const computedStyle = window.getComputedStyle(div);
-        if (computedStyle.position === 'static') {
-            div.style.position = 'relative';
-        }
-
-        // Ensure the container has a defined height.
-        // If not, set a default height (adjust as needed)
-        if (!div.style.height || div.style.height === '0px') {
-            div.style.height = '315px';
-        }
-
-        // Insert the iframe anchored to the bottom.
-        // Using bottom: 0 instead of top: 0 will anchor it at the container’s bottom.
-        div.innerHTML = `
-      <iframe src="${embedUrl}" 
-        style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; border: 0;"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen>
-      </iframe>
-    `;
-    }
-
-    function embedYouTube(div, youtubeUrl) {
-        // Ensure youtubeUrl is a string. If it's an object with a href property (like a URL), use that.
-        if (typeof youtubeUrl !== 'string') {
-            if (youtubeUrl && typeof youtubeUrl.href === 'string') {
-                youtubeUrl = youtubeUrl.href;
-            } else {
-                console.error('youtubeUrl must be a string or an object with a href property');
-                return;
-            }
-        }
-
-        // Extract the YouTube video ID from common URL formats
-        const regex = /(?:youtube\.com\/(?:.*v=|.*\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-        const match = youtubeUrl.match(regex);
-        if (!match) {
-            console.error('Invalid YouTube URL');
-            return;
-        }
-        const videoId = match[1];
-        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-
-        // Ensure the div is set to position relative so the iframe can be absolutely positioned within it
-        div.style.position = 'relative';
-
-        // Insert the iframe, making it fill the entire div.
-        // Ensure the div has defined dimensions for the iframe to scale properly.
-        div.innerHTML = `
-          <iframe src="${embedUrl}" 
-            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-          </iframe>
-        `;
-    }
 
 
-    async function getUrlFromPath(path) {
-        // Ensure the path ends with a slash
-        if (!path.endsWith('/')) {
-            path += '/';
-        }
-        const fileUrl = path + 'url.txt';
 
-        try {
-            const response = await fetch(fileUrl);
-            if (response.ok) {
-                return await response.text();
-            } else {
-                // File not found or some other HTTP error
-                return null;
-            }
-        } catch (error) {
-            console.error('Error fetching file:', error);
-            return null;
-        }
-    }
 
 
     buttonMenu.textContent = '≡';
     styleButton(buttonMenu);
 
-    // Utility function to apply styles to an element
-    const applyStyles = (element, styles) => {
-        Object.assign(element.style, styles);
-    };
 
     buttonMenu.addEventListener('click', async function () {
         // Check if the menu already exists
@@ -937,7 +775,7 @@ function program() {
     loadImage('stories/speaker2', buttonSpeakers);
     buttonSpeakers.addEventListener('click', async function () {
         let chunks = prepareChunks(currentWordBox.word);
-        currentWordBox.speak(chunks);
+        currentWordBox.speak();
     });
 
     addBorder(pinyinDiv, '2px', 'solid', '#90B0EE');
@@ -954,135 +792,31 @@ function program() {
     let currentWordBox = null; // this should be a span object
     let oldWordBox = null;
 
-    class CharacterBox {
-        constructor(wordBox, char, charIndex, parentWord) {
-            this.wordBox = wordBox;
-            this.char = char; // The character itself
-            this.charIndex = charIndex; // The index of the character within the word
-            this.parentWord = parentWord; // The word this character belongs to
-            this.chinesePhrase = this.wordBox.parentParagraph.phrases[this.charIndex];
-
-            // Create a span element for the character
-            this.charSpan = document.createElement('span');
-            this.charSpan.textContent = char;
-            this.charSpan.style.cursor = 'pointer'; // Make it clear that it's clickable
-
-            // Append to the parent div
-            this.wordBox.parentParagraph.paragraphDiv.appendChild(this.charSpan);
-
-            // Add click event listener
-            this.charSpan.addEventListener('click', () => {
-                this.onClick();
-            });
-        }
-
-        onClick() {
-            this.wordBox.select();
-            if (this.chinesePhrase != null) {
-                translationDivText.innerHTML = chinesePhrases.get(this.chinesePhrase);
-                if (translationDiv.getAttribute('data-chinese-phrase', chineseSpeechSpeed, chinesePitch) !== translationDivText.innerHTML) {
-                    translationDiv.setAttribute('data-chinese-phrase', this.chinesePhrase);
-                    translationDivText.scrollTop = 0;
-                }
-                setDiv2(translationDiv);
-            } else {
-                setDiv2(pictureDiv);
-            }
-        }
-    }
 
     let currentWordBoxIndex = 0;
+
     let wordBoxes = [];
-    class WordBox {
-        constructor(word, parentParagraph, index, paragraphIndex) {
-            this.word = word;
-            this.parentParagraph = parentParagraph;
-            this.index = index;
-            this.paragraphIndex = paragraphIndex;
 
-            this.charBoxes = [];
 
-            // Create a span for each character
-            for (let i = 0; i < word.length; i++) {
-                this.charBoxes.push(new CharacterBox(this, word[i], parentParagraph.wordIndexes[this.index] + i, word));
-            }
 
-            /*
-            this.wordSpan = document.createElement('span');
-            this.wordSpan.textContent = word;
-            parentDiv.appendChild(this.wordSpan);
-    
-            // Add a mousemove event listener to the word span
-            this.wordSpan.addEventListener('mousedown', (event) => {
-                if (currentWordBox !== this) {
-                    currentWordBox = this;
-    
-                    this.highlight(true);
-        
-                    if (oldWordBox != null) {
-                        oldWordBox.highlight(false);
-                    }
-                    oldWordBox = this;
-                }
-                speakChinese(this.word, chineseSpeechSpeed, chinesePitch);
-            });
-            */
+    function selectWord(wb) {
+        currentWordBox = wb;
+        if (oldWordBox) oldWordBox.setHighlighted(false);
+        wb.setHighlighted(true);
+        oldWordBox = wb;
+        currentWordBoxIndex = wb.index;
+
+        pinyinDiv.textContent = wordToPinyin(wb.word);
+        textFit(pinyinDiv, { multiLine: false });
+        englishWordDiv.textContent = wordToEnglish(wb.word);
+        setParagraph(wb.paragraphIndex);
+        updateBrowse(wb.word);
+        if (englishDiv) {
+            englishDiv.innerHTML = englishVersion[currentParagraphNumber] ?? '';
+            englishDiv.setAttribute('data-chinese-phrase', englishVersion[currentParagraphNumber] ?? '');
         }
-
-        select() {
-            if (currentWordBox !== this) {
-                currentWordBox = this;
-
-                this.highlight(true);
-
-                if (oldWordBox != null) {
-                    oldWordBox.highlight(false);
-                }
-                oldWordBox = this;
-            }
-            speakChinese(this.word, chineseSpeechSpeed, chinesePitch);
-        }
-
-        highlight(setHighlight) {
-            if (setHighlight) {
-                currentWordBoxIndex = this.index;
-                this.charBoxes.forEach(charBox => {
-                    charBox.charSpan.style.color = 'blue';
-                    charBox.charSpan.style.fontWeight = 'bold';
-                });
-
-                pinyinDiv.textContent = wordToPinyin(this.word);
-                textFit(pinyinDiv, { multiLine: false });
-                englishWordDiv.textContent = wordToEnglish(this.word);
-                setParagraph(this.paragraphIndex);
-                updateBrowse(this.word);
-                if (englishDiv != null) {
-                    englishDiv.innerHTML = englishVersion[currentParagraphNumber];
-                    englishDiv.setAttribute('data-chinese-phrase', englishVersion[currentParagraphNumber]);
-                }
-            } else {
-                this.charBoxes.forEach(charBox => {
-                    charBox.charSpan.style.color = 'black';
-                    charBox.charSpan.style.fontWeight = 'normal';
-                });
-            }
-        }
-
-        speak(chunks) {
-            stopSpeaking();
-            this.wordSpan.style.color = 'red';
-            let n = this.index + 1;
-            let nextChunks = [];
-            if (wordBoxes.length > n) {
-                nextChunks = prepareChunks(wordBoxes[n].word);
-            }
-            speakChunks(chunks, chineseSpeechSpeed, chinesePitch, () => {
-                this.wordSpan.style.color = 'black';
-                if (wordBoxes.length > n) {
-                    wordBoxes[n].speak(nextChunks);
-                }
-            });
-        }
+        // same tap-to-preview you had before
+        speakChinese(wb.word, 1, 1);
     }
 
     class Paragraph {
@@ -1127,10 +861,53 @@ function program() {
                 }
             }
 
-            for (let i = 0; i < this.words.length; i++) {
-                let wordBox = new WordBox(this.words[i], this, i, this.paragraphIndex, this.phrases[i]);
-                wordBoxes.push(wordBox);
-            }
+            // wordsRow is your container for word elements
+            // words is your array of Chinese words
+            // wordBoxes is global or outer-scope so deps.getWordBox can see it
+
+ 
+
+            // Build WordBox instances for THIS paragraph using the module class
+            const startIndex = wordBoxes.length;
+
+            const deps = {
+                prepareChunks,
+                speakChunks,
+                stopSpeaking,
+                getSpeed: () => chineseSpeechSpeed,
+                getPitch: () => chinesePitch,
+                getWordBox: (i) => wordBoxes[i],
+                onSelectWord: (wb) => selectWord(wb),
+                onCharClick: ({ wb, charIndex }) => {
+                    // map from word-local char index to paragraph char index → phrase lookup
+                    const paraWordIndex = wb.index - startIndex;             // index within this paragraph
+                    const absChar = this.wordIndexes[paraWordIndex] + charIndex;
+                    const phrase = this.phrases[absChar] || null;
+                    if (phrase) {
+                        translationDivText.innerHTML = chinesePhrases.get(phrase);
+                        if (translationDiv.getAttribute('data-chinese-phrase') !== phrase) {
+                            translationDiv.setAttribute('data-chinese-phrase', phrase);
+                            translationDivText.scrollTop = 0;
+                        }
+                        setDiv2(translationDiv);
+                    } else {
+                        setDiv2(pictureDiv);
+                    }
+                }
+            };
+
+            this.words.forEach((w, i) => {
+                const wb = new WordBox({
+                    word: w,
+                    parentEl: this.paragraphDiv,
+                    index: startIndex + i,
+                    paragraphIndex: this.paragraphIndex,
+                    deps
+                });
+                wordBoxes.push(wb);
+            });
+
+
         }
         speak() {
             speakChinese(this.text, chineseSpeechSpeed, chinesePitch);
@@ -1280,64 +1057,6 @@ function program() {
         }
     });
 
-    // Function to dynamically create and position elements
-    function makeChild(elementType, parentDiv, name, leftPercent, topPercent, widthPercent, heightPercent) {
-        let child = document.createElement(elementType);
-        if (name != null) child.id = name;
-        child.style.position = 'absolute';
-        child.style.left = leftPercent + '%';
-        child.style.top = topPercent + '%';
-        child.style.width = widthPercent + '%';
-        child.style.height = heightPercent + '%';
 
-        parentDiv.appendChild(child);
-
-        return child;
-    }
-
-    function makeChildInput(inputType, parentDiv, name, leftPercent, topPercent, widthPercent, heightPercent) {
-        let child = document.createElement('input');
-        if (name != null) child.id = name;
-        child.style.position = 'absolute';
-        child.style.left = leftPercent + '%';
-        child.style.top = topPercent + '%';
-        child.style.width = widthPercent + '%';
-        child.style.height = heightPercent + '%';
-
-        child.type = inputType; // Set the type to range if it is an input element
-        parentDiv.appendChild(child);
-
-        return child;
-    }
-
-    function makeDiv(text, parentDiv, name, leftPercent, topPercent, widthPercent, heightPercent, scroll) {
-        let div = makeChild('div', parentDiv, name, leftPercent, topPercent, widthPercent, heightPercent)
-        if (text != null) {
-            div.textContent = text;
-        }
-        if (scroll) {
-            // Ensure mainText allows scrolling
-            div.style.overflowY = 'scroll';
-        }
-        return div;
-    }
-
-    // Function to add a border and adjust size accordingly
-    function addBorder(element, width, style, color) {
-        let borderWidth = parseInt(width);  // Convert border width to an integer value
-
-        // Adjust the width and height of the element to account for the border
-        let currentWidth = element.offsetWidth;
-        let currentHeight = element.offsetHeight;
-
-        // Subtract the border width from the element's dimensions
-        element.style.width = (currentWidth - 2 * borderWidth) + 'px';
-        element.style.height = (currentHeight - 2 * borderWidth) + 'px';
-
-        // Apply the border styles
-        element.style.borderWidth = width;
-        element.style.borderStyle = style;
-        element.style.borderColor = color;
-    }
 
 }
